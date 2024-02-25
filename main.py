@@ -22,14 +22,18 @@ driver.get("https://canvas.uw.edu/courses/")
 
 
 def get_days_left(due_text):  # EX: due_text = "Mar 17 at 11:59pm"
+    days_left = 0
     today = datetime.date.today()
     due_date_split = due_text.split(" at ")
     month_day = due_date_split[0]
+    if "Feb 29" in month_day:
+        month_day = "Feb 28"
+        days_left = 1
     my_date = datetime.datetime.strptime(month_day, "%b %d")
     day = int(my_date.strftime("%d"))
     month = int(my_date.strftime("%m"))
     full_due_date = datetime.date(today.year, month, day)
-    days_left = (full_due_date - today).days
+    days_left += (full_due_date - today).days
     return days_left
 
 
@@ -77,7 +81,7 @@ for i in range(num_course):
 
         assignments_tab = driver.find_element(By.LINK_TEXT, value="Assignments")
         assignments_tab.click()
-        time.sleep(3)
+        time.sleep(5)
 
         u_assignments_group = driver.find_element(By.CLASS_NAME, value="assignment-list")
         assignments_info = u_assignments_group.find_elements(By.CLASS_NAME, value="ig-info")
@@ -121,5 +125,6 @@ full_course = {
 
 
 # CSV PART YK
-with open("assignments.csv") as hw_file:
-    data = pd.read_csv(hw_file)
+file = open("assignments.csv", mode="w")
+file.close()
+data = pd.read_csv("assignments.csv")
