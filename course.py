@@ -5,6 +5,7 @@ import time
 import datetime
 import pandas as pd
 
+
 TERM = "Winter 2024"
 
 all_assignments = {}
@@ -47,7 +48,7 @@ def get_assignment_details(hws, name):
         # if "â€”" in assignment_name:
         #     assignment_name.replace("â€”", "--")
         all_assignments[course_name][assignment_name] = {}
-        due_date = assignment.find_elements(By.CSS_SELECTOR, value=".ig-details__item span")[1].text
+        due_date = assignment.find_element(By.CSS_SELECTOR, value=".ig-details__item.assignment-date-due span").text
         all_assignments[course_name][assignment_name]["due"] = due_date
         days_left = get_days_left(due_date)
         all_assignments[course_name][assignment_name]["days_left"] = days_left
