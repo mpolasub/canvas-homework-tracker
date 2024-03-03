@@ -1,12 +1,9 @@
 import tkinter
+from tkinter import messagebox
 import customtkinter
 from PIL import ImageTk, Image
 from coursetest import Courses
-
-
-# prereqs
-
-
+import pandas as pd
 
 customtkinter.set_appearance_mode("System")  # Modes: system (default), light, dark
 # customtkinter.set_default_color_theme("green")  # Themes: blue (default), dark-blue, green
@@ -18,10 +15,28 @@ app.wm_attributes('-transparentcolor', 'red')
 app.resizable(width=False, height=False)
 
 
-def button_function():
+def create_csv(assignments):
+    hw_df = pd.DataFrame(assignments,
+                         columns=['Assignments', 'Due Date', 'Days Left', 'Points', 'Course Name', 'Link'])
+    hw_df.to_csv('assignments.csv', encoding='utf-8', index=False)
+
+
+def display_end_message():
+    messagebox.showinfo(title="Finished processing", message="Data collection finished. Please view "
+                                                              "'assignments.csv'.")
+
+
+def start_selenium():
     quarter = entry_quarter.get()
-    # course_manager = Courses(quarter)
-    # course_manager.start_program()
+    course_manager = Courses(quarter)
+    course_manager.start_program()
+
+    assignments = course_manager.get_all_assignments()
+    create_csv(assignments)
+    entry_quarter.delete(0, 'end')
+    
+    display_end_message()
+
 
 
 bg_image = ImageTk.PhotoImage(Image.open("./assets/hwbg3.png"))
@@ -43,7 +58,7 @@ entry_quarter.configure(border_color='#B2B2B2', fg_color='#F8F8F8', text_color='
 entry_quarter.place(x=55, y=135)
 
 # Create custom button
-submit_button = customtkinter.CTkButton(master=frame, width=220, text="Submit", command=button_function,
+submit_button = customtkinter.CTkButton(master=frame, width=220, text="Submit", command=start_selenium,
                                         corner_radius=6)
 submit_button.configure(fg_color='#E44545', hover_color='#993838', text_color='White')
 submit_button.place(x=55, y=180)

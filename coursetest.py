@@ -3,7 +3,22 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import StaleElementReferenceException
 import time
 import datetime
-import pandas as pd
+
+
+def get_days_left(due_text):  # EX: due_text = "Mar 17 at 11:59pm"
+    days_left = 0
+    today = datetime.date.today()
+    due_date_split = due_text.split(" at ")
+    month_day = due_date_split[0]
+    if "Feb 29" in month_day:
+        month_day = "Feb 28"
+        days_left = 1
+    my_date = datetime.datetime.strptime(month_day, "%b %d")
+    day = int(my_date.strftime("%d"))
+    month = int(my_date.strftime("%m"))
+    full_due_date = datetime.date(today.year, month, day)
+    days_left += (full_due_date - today).days
+    return days_left
 
 
 class Courses:
@@ -11,32 +26,27 @@ class Courses:
     assignment_list = []
     TERM = ""
     driver = ""
-
-
-
+    ticker = 0
 
     def __init__(self, quarter):
         self.TERM = quarter
         self.driver = webdriver.Chrome()
 
+    def wait_for_login(self):
+        url = self.driver.current_url  # get url
+        if url == "https://canvas.uw.edu/courses" and self.ticker == 1:
+            return
+        if url == "https://idp.u.washington.edu/idp/profile/SAML2/Redirect/SSO?execution=e1s1" and self.ticker != 1:
+            self.ticker += 1
+        time.sleep(2)
+
+        self.wait_for_login()
+
     def start_program(self):
         print(self.TERM)
         self.driver.get("https://canvas.uw.edu/courses/")
-
-    def get_days_left(self, due_text):  # EX: due_text = "Mar 17 at 11:59pm"
-        days_left = 0
-        today = datetime.date.today()
-        due_date_split = due_text.split(" at ")
-        month_day = due_date_split[0]
-        if "Feb 29" in month_day:
-            month_day = "Feb 28"
-            days_left = 1
-        my_date = datetime.datetime.strptime(month_day, "%b %d")
-        day = int(my_date.strftime("%d"))
-        month = int(my_date.strftime("%m"))
-        full_due_date = datetime.date(today.year, month, day)
-        days_left += (full_due_date - today).days
-        return days_left
+        print("starting wait")
+        self.wait_for_login()
 
     def get_assignment_details(self, hws, name):
         for assignment in hws:
@@ -51,87 +61,59 @@ class Courses:
             self.all_assignments[name][assignment_name] = {}
             due_date = assignment.find_element(By.CSS_SELECTOR, value=".ig-details__item.assignment-date-due span").text
             self.all_assignments[name][assignment_name]["due"] = due_date
-            days_left = self.get_days_left(due_date)
+            days_left = get_days_left(due_date)
             self.all_assignments[name][assignment_name]["days_left"] = days_left
             self.all_assignments[name][assignment_name]["points"] = points
 
             assignment_tuple = (assignment_name, due_date, days_left, points, name, assignment_link)
             self.assignment_list.append(assignment_tuple)
 
-    input("Press 'enter' once you have logged in.")
-
-    all_courses = driver.find_elements(By.CLASS_NAME, value="course-list-table-row")
-    num_course = 0
-
-    # get all relevant courses and put them in term_courses
-    for course in all_courses:
-        if TERM in course.text:
-            num_course += 1
-
-    # cycling through all courses
-    for i in range(num_course):
-        all_courses = driver.find_elements(By.CLASS_NAME, value="course-list-table-row")
-        term_courses = []
+    # input("Press 'enter' once you have logged in.")
+    def get_all_assignments(self):
+        all_courses = self.driver.find_elements(By.CLASS_NAME, value="course-list-table-row")
+        num_course = 0
 
         # get all relevant courses and put them in term_courses
         for course in all_courses:
-            if TERM in course.text:
-                term_courses.append(course.find_element(By.CSS_SELECTOR, value="a"))
+            if self.TERM in course.text:
+                num_course += 1
 
-        try:
-            course = term_courses[i]
-            print(course)
-            course_name = course.get_attribute("title")
-            all_assignments[course_name] = {}
-            course.click()
-            time.sleep(2)
+        # cycling through all courses
+        for i in range(num_course):
+            all_courses = self.driver.find_elements(By.CLASS_NAME, value="course-list-table-row")
+            term_courses = []
 
-            assignments_tab = driver.find_element(By.LINK_TEXT, value="Assignments")
-            assignments_tab.click()
-            time.sleep(5)
+            # get all relevant courses and put them in term_courses
+            for course in all_courses:
+                if self.TERM in course.text:
+                    term_courses.append(course.find_element(By.CSS_SELECTOR, value="a"))
 
-            u_assignments_group = driver.find_element(By.CLASS_NAME, value="assignment-list")
-            assignments_info = u_assignments_group.find_elements(By.CLASS_NAME, value="ig-info")
+            try:
+                course = term_courses[i]
+                print(course)
+                course_name = course.get_attribute("title")
+                self.all_assignments[course_name] = {}
+                course.click()
+                time.sleep(2)
 
-            get_assignment_details(assignments_info, course_name)
+                assignments_tab = self.driver.find_element(By.LINK_TEXT, value="Assignments")
+                assignments_tab.click()
+                time.sleep(5)
 
-            main_page = driver.find_element(By.ID, value="global_nav_courses_link")
-            main_page.click()
-            time.sleep(1)
+                u_assignments_group = self.driver.find_element(By.CLASS_NAME, value="assignment-list")
+                assignments_info = u_assignments_group.find_elements(By.CLASS_NAME, value="ig-info")
 
-            courses_page = driver.find_element(By.LINK_TEXT, value="All Courses")
-            courses_page.click()
-            time.sleep(1)
-        #
-        except StaleElementReferenceException:
-            pass
+                self.get_assignment_details(assignments_info, course_name)
 
-    print(all_assignments)
+                main_page = self.driver.find_element(By.ID, value="global_nav_courses_link")
+                main_page.click()
+                time.sleep(1)
 
-    """"" JSON Format
-    full_course = {
-        "course_name1": {
-            "assignment_name": {
-                "due": "Feb 14 at 11:59PM",
-                "days_left": days_left,
-                "points": points
-            }
-        },
-        "course_name2": {
-            "assignment_name1": {
-                "due": "Feb 19 at 11:59PM",
-                "days_left": days_left
-            },
-            "assignment_name2": {
-                "due": "Feb 15 at 11:59PM",
-                "days_left": days_left
-            }
-        }
-    }
-    """""
+                courses_page = self.driver.find_element(By.LINK_TEXT, value="All Courses")
+                courses_page.click()
+                time.sleep(1)
+            #
+            except StaleElementReferenceException:
+                pass
 
-    # populating csv
-
-    hw_df = pd.DataFrame(assignment_list,
-                         columns=['Assignments', 'Due Date', 'Days Left', 'Points', 'Course Name', 'Link'])
-    hw_df.to_csv('assignments.csv', encoding='utf-8', index=False)
+        return self.assignment_list
