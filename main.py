@@ -5,8 +5,7 @@ from PIL import ImageTk, Image
 from coursetest import Courses
 import pandas as pd
 
-customtkinter.set_appearance_mode("System")  # Modes: system (default), light, dark
-# customtkinter.set_default_color_theme("green")  # Themes: blue (default), dark-blue, green
+customtkinter.set_appearance_mode("System")
 
 app = customtkinter.CTk()  # creating cutstom tkinter window
 app.geometry("600x440")
@@ -23,7 +22,7 @@ def create_csv(assignments):
 
 def display_end_message():
     messagebox.showinfo(title="Finished processing", message="Data collection finished. Please view "
-                                                              "'assignments.csv'.")
+                                                             "'assignments.csv'.")
 
 
 def start_selenium():
@@ -34,9 +33,8 @@ def start_selenium():
     assignments = course_manager.get_all_assignments()
     create_csv(assignments)
     entry_quarter.delete(0, 'end')
-    
-    display_end_message()
 
+    display_end_message()
 
 
 bg_image = ImageTk.PhotoImage(Image.open("./assets/hwbg3.png"))
