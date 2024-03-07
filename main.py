@@ -1,9 +1,23 @@
+import os
+import sys
 import tkinter
 from tkinter import messagebox
 import customtkinter
 from PIL import ImageTk, Image
 from coursetest import Courses
 import pandas as pd
+
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS2
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
 
 customtkinter.set_appearance_mode("System")
 
@@ -37,14 +51,14 @@ def start_selenium():
     display_end_message()
 
 
-bg_image = ImageTk.PhotoImage(Image.open("./assets/hwbg3.png"))
+bg_image = ImageTk.PhotoImage(Image.open(resource_path("assets\\hwbg3.png")))
 
 label = customtkinter.CTkLabel(master=app, image=bg_image)
 label.pack()
 
 # creating custom frame
 frame = customtkinter.CTkFrame(master=label, width=330, height=242, corner_radius=15)
-frame.configure(fg_color="#FFFFFF", bg_color='#FFB7B7')
+frame.configure(fg_color="#FFFFFF", bg_color='#ffe0e0')
 frame.place(relx=0.5, rely=0.5, anchor=tkinter.CENTER)
 
 l2 = customtkinter.CTkLabel(master=frame, text="Canvas HW Collector", font=('Century Gothic', 20))
@@ -61,7 +75,7 @@ submit_button = customtkinter.CTkButton(master=frame, width=220, text="Submit", 
 submit_button.configure(fg_color='#E44545', hover_color='#993838', text_color='White')
 submit_button.place(x=55, y=180)
 
-cvlogo = customtkinter.CTkImage(Image.open("./assets/cvlogo.png").resize((100, 100)))
+cvlogo = customtkinter.CTkImage(Image.open(resource_path("assets\\cvlogo.png")).resize((100, 100)))
 cvlogo.configure(size=(35, 35))
 cvimg = customtkinter.CTkLabel(app, text="", image=cvlogo, bg_color="White")
 
